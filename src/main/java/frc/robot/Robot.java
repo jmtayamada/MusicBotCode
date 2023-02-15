@@ -21,6 +21,9 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import org.opencv.objdetect.HOGDescriptor;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.Timer;
@@ -77,6 +80,7 @@ public class Robot extends TimedRobot {
   Solenoid Horn4 = new Solenoid(PneumaticsModuleType.CTREPCM,3);
   Solenoid Horn5 = new Solenoid(PneumaticsModuleType.CTREPCM,4);
   Solenoid Horn6 = new Solenoid(PneumaticsModuleType.CTREPCM,5);
+  Solenoid horns[] = {Horn1, Horn2, Horn3, Horn4, Horn5, Horn6};
 
   // temp
   boolean turning;
@@ -269,8 +273,38 @@ public class Robot extends TimedRobot {
     // }
     motors1.setDeadband(0.0001);
     motors2.setDeadband(0.0001);
+    rhythm(1, 100, 100, 10);
   }
- 
+ //TODO: add a bunch of try catch block to thread.sleep uses in async functions
+  public void hornPlayNote_async(int hornNo, long time_ms){
+    Thread playThread = new Thread(() -> {
+      horns[hornNo - 1].set(true);
+      Thread.sleep(time_ms);
+      horns[hornNo - 1].set(false);
+    });
+    playThread.start();
+  }
+  public void hornPlayNote(int hornNo, long time_ms){
+  horns[hornNo -1].set(true);
+  Thread.sleep(time_ms);
+  horns[hornNo -1].set(false);
+
+
+
+  } 
+  public void rhythm(int hornNo, long time_on, long time_off, int iter){
+    Thread rhythmThread = new Thread(() -> {
+    for(int i = 0; i <= iter; i++){
+      hornPlayNote(hornNo, time_on);
+      Thread.sleep(time_off);
+    }
+    });
+    rhythmThread.start();
+  }
+
+
+
+
   @Override
   public void autonomousPeriodic() {
     timer.start();
