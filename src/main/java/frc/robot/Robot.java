@@ -408,7 +408,7 @@ public class Robot extends TimedRobot {
       // }
       a_turnValue = -tx.getDouble(0)/54;
       if (ty.getDouble(0) > 19.25) {
-        a_driveValue = (ty.getDouble(0)-19.5)/5.35;
+        a_driveValue = (ty.getDouble(0)-19.25)/5.35;
       } else if(ty.getDouble(0) < 18.75) {
         a_driveValue = -(9.25+(-(ty.getDouble(0)-9.25)))/18.5;
       } else {
