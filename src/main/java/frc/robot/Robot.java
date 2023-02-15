@@ -61,6 +61,8 @@ public class Robot extends TimedRobot {
   private final Joystick driverStick = new Joystick(2);
   Timer timer = new Timer();
 
+  boolean hasScoredAutonomous = false;
+
   boolean driveTrainDirection = true;
   // intakeDirection = true: forwards
   // intakeDirection = false: backwards
@@ -377,6 +379,7 @@ public class Robot extends TimedRobot {
         a_driveValue = -(9.25+(-(ty.getDouble(0)-9.25)))/18.5;
       } else {
         a_driveValue = 0;
+        // arm code goes here
       }
       if (a_driveValue > 1) {
         a_driveValue = 1;
@@ -396,8 +399,8 @@ public class Robot extends TimedRobot {
     } else {
       found = false;
       if (timer.get() < .5) {
-        motors1.arcadeDrive(0, -0);  //.5
-        motors2.arcadeDrive(0, -0);   //.5
+        motors1.arcadeDrive(0, -.5);  //.5
+        motors2.arcadeDrive(0, -.5);   //.5
       } 
       if (timer.get() < 1.5 && timer.get() >= .5) {
         motors1.arcadeDrive(0, 0);
