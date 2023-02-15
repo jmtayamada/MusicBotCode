@@ -279,7 +279,6 @@ public class Robot extends TimedRobot {
     // //     motors1.arcadeDrive(0, 0);
     // //     motors2.arcadeDrive(0, 0);
     // // }
-
     // // if (tv.getDouble(0) == 1) {
     // //   motors1.arcadeDrive(.5, 0);
     // //   motors2.arcadeDrive(.5, 0);
@@ -335,7 +334,7 @@ public class Robot extends TimedRobot {
     //     }
     //     else {
           
-      
+
     //     }
     //   }
     // } else {
