@@ -275,7 +275,6 @@ public class Robot extends TimedRobot {
     motors2.setDeadband(0.0001);
     rhythm(1, 100, 100, 10);
   }
- //TODO: add a bunch of try catch block to thread.sleep uses in async functions
   public void hornPlayNote_async(int hornNo, long time_ms){
     Thread playThread = new Thread(() -> {
       horns[hornNo - 1].set(true);
@@ -284,14 +283,13 @@ public class Robot extends TimedRobot {
     });
     playThread.start();
   }
+
   public void hornPlayNote(int hornNo, long time_ms){
   horns[hornNo -1].set(true);
   try {Thread.sleep(time_ms); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
   horns[hornNo -1].set(false);
-
-
-
   } 
+
   public void rhythm(int hornNo, long time_on, long time_off, int iter){
     Thread rhythmThread = new Thread(() -> {
     for(int i = 0; i <= iter; i++){
@@ -301,8 +299,27 @@ public class Robot extends TimedRobot {
     });
     rhythmThread.start();
   }
+// Song is a 2d array of longs, first [] defines the current note to play second [] is the info of the note. song[i][0] is the horn to play note through (If this is zero, the Program sleeps without playing anything) and song[i][1] is the time to play it for.
+  public void playSong(long[][] song) {
+    for(int i = 0; i <= song.length; i++){
+      if(song[i][0] == 0) {
+        try {Thread.sleep(song[i][1]); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
+        continue;
+
+      } else if (song[i][0] > 6 || song[i][0] < 0){
+        System.out.println("Invalid Horn Number at note" + i);
+        continue;
+
+      }
+      hornPlayNote((int)song[i][0], song[i][1]);
 
 
+    }
+
+
+
+
+  }
 
 
   @Override
@@ -414,7 +431,7 @@ public class Robot extends TimedRobot {
       } else {
         a_driveValue = 0;
         // arm code goes here
-      }
+      } 
       if (a_driveValue > 1) {
         a_driveValue = 1;
       } else if(a_driveValue < -1) {
