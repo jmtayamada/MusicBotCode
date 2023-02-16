@@ -279,14 +279,14 @@ public class Robot extends TimedRobot {
   public void hornPlayNote_async(int hornNo, long time_ms){
     Thread playThread = new Thread(() -> {
       horns[hornNo - 1].set(true);
-      Thread.sleep(time_ms);
+      try {Thread.sleep(time_ms); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
       horns[hornNo - 1].set(false);
     });
     playThread.start();
   }
   public void hornPlayNote(int hornNo, long time_ms){
   horns[hornNo -1].set(true);
-  Thread.sleep(time_ms);
+  try {Thread.sleep(time_ms); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
   horns[hornNo -1].set(false);
 
 
@@ -296,7 +296,7 @@ public class Robot extends TimedRobot {
     Thread rhythmThread = new Thread(() -> {
     for(int i = 0; i <= iter; i++){
       hornPlayNote(hornNo, time_on);
-      Thread.sleep(time_off);
+      try {Thread.sleep(time_off); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
     }
     });
     rhythmThread.start();
