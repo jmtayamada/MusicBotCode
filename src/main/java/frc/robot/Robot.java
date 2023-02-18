@@ -42,7 +42,9 @@ import com.ctre.phoenix.sensors.SensorTimeBase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RootNameLookup;
-
+import edu.wpi.first.math.controller.PIDController;
+import java.util.*;
+//Todo: finetune PID constants using trial and error
 
 
 // possible mechanics
@@ -66,6 +68,13 @@ public class Robot extends TimedRobot {
   private final DifferentialDrive motors2 = new DifferentialDrive(leftMotor2, rightMotor2);
   private final Joystick driverStick = new Joystick(2);
   Timer timer = new Timer();
+  final ArrayList<Integer> ids = new ArrayList<Integer>();
+  final double kP = 0.05;
+  final double kI = 0.05;
+  final double kD = 0.05;
+
+  PIDController pid = new PIDController(kP, kI, kD);
+  final double setPoint = 180.0;
 
   boolean hasScoredAutonomous = false;
 
@@ -75,6 +84,7 @@ public class Robot extends TimedRobot {
 
   // create variable for distance between robot to target (horizontal)
   double distanceFromLimelightToGoalInches;
+  int tagID;
   
   // pneumatics
   Solenoid Horn1 = new Solenoid(PneumaticsModuleType.CTREPCM, 0);
@@ -133,6 +143,9 @@ public class Robot extends TimedRobot {
  
   @Override
   public void robotInit() {
+    //initialize list of AprilTags to move towards
+    ids.add(0, 3);
+    ids.add(1, 17);
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
@@ -199,7 +212,7 @@ public class Robot extends TimedRobot {
     if (driverStick.getRawButtonPressed(5)) {
       encoder.reset();
     }
-    int tagID;
+    
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
     //System.out.println("\n" + json.getString("No JSON Data"));
      try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
@@ -415,9 +428,16 @@ public class Robot extends TimedRobot {
     //     timer.reset();
     //   }
     // }
+    try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
+          JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
+          tagID = idNode.asInt();
+     } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
-    if (tv.getDouble(0) == 1) {
-      double RobotVerticalAngle = ty.getDouble(0);
+    
+    if (tv.getDouble(0) == 1 && ids.contains(tagID)) {
+      double xAngleOffset = tx.getDouble(0);
+      motors1.arcadeDrive(0, pid.calculate(setPoint, gyro.getAngle()));
+      //double RobotVerticalAngle = ty.getDouble(0);
       // if (RobotVerticalAngle > 19.5) {
       //   leftMotor.set(ControlMode.PercentOutput, RobotVerticalAngle);
       //   leftMotor2.set(ControlMode.PercentOutput, RobotVerticalAngle);
@@ -434,7 +454,7 @@ public class Robot extends TimedRobot {
       //   rightMotor.set(ControlMode.PercentOutput, 0);
       //   rightMotor2.set(ControlMode.PercentOutput, 0);
       // }
-      a_turnValue = -tx.getDouble(0)/54;
+      /*a_turnValue = -tx.getDouble(0)/54;
       if (ty.getDouble(0) > 19.25) {
         a_driveValue = (ty.getDouble(0)-19.25)/5.35;
       } else if(ty.getDouble(0) < 18.75) {
@@ -470,7 +490,7 @@ public class Robot extends TimedRobot {
       }
       if (timer.get() >= 1.5) {
         timer.reset();
-      }
+      }*/
     }
   }
 }
