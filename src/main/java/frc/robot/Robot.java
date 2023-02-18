@@ -39,6 +39,9 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.ctre.phoenix.sensors.SensorTimeBase;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.RootNameLookup;
 
 
 
@@ -104,6 +107,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry ta = table.getEntry("ta");
   NetworkTableEntry tv = table.getEntry("tv");
   NetworkTableEntry json = table.getEntry("json");
+  ObjectMapper lightMapper = new ObjectMapper();
 
 
 
@@ -196,6 +200,11 @@ public class Robot extends TimedRobot {
     }
 
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
+    try { JsonNode rootNode = lightMapper.readTree(json.getString("[]"));
+          JsonNode idNode = rootNode.path("fID");
+          System.out.println(idNode.asInt());
+     } catch (Exception e) {System.out.println("Wierd JSON Bullshit");}
+    
    
 
     if (driverStick.getRawButtonPressed(2)) {
