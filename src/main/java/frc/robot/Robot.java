@@ -199,12 +199,12 @@ public class Robot extends TimedRobot {
     if (driverStick.getRawButtonPressed(5)) {
       encoder.reset();
     }
-
+    int tagID;
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
     //System.out.println("\n" + json.getString("No JSON Data"));
      try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
           JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
-          System.out.println(idNode.asText("Bad Parsing"));
+          tagID = idNode.asInt();
      } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
    
