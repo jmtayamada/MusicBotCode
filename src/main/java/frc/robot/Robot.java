@@ -103,6 +103,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry ty = table.getEntry("ty");
   NetworkTableEntry ta = table.getEntry("ta");
   NetworkTableEntry tv = table.getEntry("tv");
+  NetworkTableEntry json = table.getEntry("json");
 
 
 
@@ -173,7 +174,6 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("voltage", mb1023.getVoltage());
     SmartDashboard.putNumber("distance", (mb1023.getVoltage() * .976));
-
   }
 
   @Override
@@ -188,16 +188,15 @@ public class Robot extends TimedRobot {
     //     driveTrainDirection = false;
     //   } else {
     //     driveTrainDirection = true;
-    //   }
-    // }
-      
-    // reset encoders
+    //   }System.out.println(json.getString("No JSON"));
+    // reset 
+    
     if (driverStick.getRawButtonPressed(5)) {
       encoder.reset();
     }
 
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
-
+   
 
     if (driverStick.getRawButtonPressed(2)) {
       if (driveTrainDirection == true) {
@@ -273,7 +272,7 @@ public class Robot extends TimedRobot {
     // }
     motors1.setDeadband(0.0001);
     motors2.setDeadband(0.0001);
-    rhythm(1, 100, 100, 10);
+    // rhythm(1, 100, 100, 10);
   }
   public void hornPlayNote_async(int hornNo, long time_ms){
     Thread playThread = new Thread(() -> {
@@ -405,6 +404,7 @@ public class Robot extends TimedRobot {
     //     timer.reset();
     //   }
     // }
+    
     if (tv.getDouble(0) == 1) {
       double RobotVerticalAngle = ty.getDouble(0);
       // if (RobotVerticalAngle > 19.5) {
