@@ -108,7 +108,7 @@ public class Robot extends TimedRobot {
   NetworkTableEntry tv = table.getEntry("tv");
   NetworkTableEntry json = table.getEntry("json");
   ObjectMapper lightMapper = new ObjectMapper();
-
+  double steeringSpeed = 0.8;
 
 
   // read values periodically, use this code in autonomous and teleop
@@ -178,6 +178,7 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("voltage", mb1023.getVoltage());
     SmartDashboard.putNumber("distance", (mb1023.getVoltage() * .976));
+    SmartDashboard.putString("JSON Data", json.getString("No JSON Data"));
   }
 
   @Override
@@ -200,10 +201,11 @@ public class Robot extends TimedRobot {
     }
 
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
-    try { JsonNode rootNode = lightMapper.readTree(json.getString("[]"));
-          JsonNode idNode = rootNode.path("fID");
-          System.out.println(idNode.asInt());
-     } catch (Exception e) {System.out.println("Wierd JSON Bullshit");}
+    //System.out.println("\n" + json.getString("No JSON Data"));
+     try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
+          JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
+          System.out.println(idNode.asText("Bad Parsing"));
+     } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
    
 
@@ -220,11 +222,11 @@ public class Robot extends TimedRobot {
 
 
     if (driveTrainDirection == true){
-      motors1.arcadeDrive(driverStick.getY(), -driverStick.getX());
-      motors2.arcadeDrive(driverStick.getY(), -driverStick.getX());
+      motors1.arcadeDrive(driverStick.getY() * steeringSpeed, -driverStick.getZ() * steeringSpeed);
+      motors2.arcadeDrive(driverStick.getY() * steeringSpeed, -driverStick.getZ() * steeringSpeed);
     } else {
-      motors1.arcadeDrive(-driverStick.getY(), driverStick.getX());
-      motors2.arcadeDrive(-driverStick.getY(), driverStick.getX());
+      motors1.arcadeDrive(-driverStick.getY() * steeringSpeed, driverStick.getZ() * steeringSpeed);
+      motors2.arcadeDrive(-driverStick.getY() * steeringSpeed, driverStick.getZ() * steeringSpeed);
     }
 
     // pneumatics example
