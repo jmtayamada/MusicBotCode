@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
   final double kD = 0.05;
 
   PIDController pid = new PIDController(kP, kI, kD);
-  final double setPoint = 180.0;
+  final double setPoint = 20.0;
 
   boolean hasScoredAutonomous = false;
 
@@ -144,8 +144,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     //initialize list of AprilTags to move towards
-    ids.add(0, 3);
-    ids.add(1, 17);
+    //ids.add(0, 3);
+    ids.add(0, 17);
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
@@ -214,10 +214,12 @@ public class Robot extends TimedRobot {
     }
     
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
-    //System.out.println("\n" + json.getString("No JSON Data"));
+    System.out.println("\n" + json.getString("No JSON Data"));
      try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
           JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
           tagID = idNode.asInt();
+          System.out.println(tagID);
+          System.out.println(tx.getDouble(0));
      } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
    
@@ -431,12 +433,13 @@ public class Robot extends TimedRobot {
     try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
           JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
           tagID = idNode.asInt();
+          System.out.println(tagID);
      } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
     
-    if (tv.getDouble(0) == 1 && ids.contains(tagID)) {
-      double xAngleOffset = tx.getDouble(0);
-      motors1.arcadeDrive(0, pid.calculate(setPoint, gyro.getAngle()));
+    if (tv.getDouble(0) == 1) {
+    //   double xAngleOffset = tx.getDouble(0);
+    //   motors1.arcadeDrive(0, pid.calculate(gyro.getAngle(), setPoint));
       //double RobotVerticalAngle = ty.getDouble(0);
       // if (RobotVerticalAngle > 19.5) {
       //   leftMotor.set(ControlMode.PercentOutput, RobotVerticalAngle);
@@ -454,7 +457,7 @@ public class Robot extends TimedRobot {
       //   rightMotor.set(ControlMode.PercentOutput, 0);
       //   rightMotor2.set(ControlMode.PercentOutput, 0);
       // }
-      /*a_turnValue = -tx.getDouble(0)/54;
+      a_turnValue = -tx.getDouble(0)/54;
       if (ty.getDouble(0) > 19.25) {
         a_driveValue = (ty.getDouble(0)-19.25)/5.35;
       } else if(ty.getDouble(0) < 18.75) {
@@ -490,7 +493,7 @@ public class Robot extends TimedRobot {
       }
       if (timer.get() >= 1.5) {
         timer.reset();
-      }*/
+      }
     }
   }
 }
