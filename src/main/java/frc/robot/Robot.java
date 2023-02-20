@@ -26,6 +26,8 @@ import org.opencv.objdetect.HOGDescriptor;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.math.controller.PIDController;
+
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.cameraserver.CameraServer;
@@ -42,7 +44,6 @@ import com.ctre.phoenix.sensors.SensorTimeBase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RootNameLookup;
-import edu.wpi.first.math.controller.PIDController;
 import java.util.*;
 //Todo: finetune PID constants using trial and error
 
@@ -69,12 +70,12 @@ public class Robot extends TimedRobot {
   private final Joystick driverStick = new Joystick(2);
   Timer timer = new Timer();
   final ArrayList<Integer> ids = new ArrayList<Integer>();
-  final double kP = 0.05;
-  final double kI = 0.05;
-  final double kD = 0.05;
-
+  static final double kP = 0.001;
+  static final double kI = 0.0;
+  static final double kD = 0.0;
+  AHRS gyro = new AHRS(); 
+  // AHRS gyro;
   PIDController pid = new PIDController(kP, kI, kD);
-  final double setPoint = 20.0;
 
   boolean hasScoredAutonomous = false;
 
@@ -103,9 +104,6 @@ public class Robot extends TimedRobot {
   double a_turnValue;
   double a_driveValue;
 
-  // gyroscope
-  AHRS gyro;
-
   // encoder
   Encoder encoder = new Encoder(1, 0, false, Encoder.EncodingType.k2X);
   CANCoder cancoder = new CANCoder(1);
@@ -118,7 +116,9 @@ public class Robot extends TimedRobot {
   NetworkTableEntry tv = table.getEntry("tv");
   NetworkTableEntry json = table.getEntry("json");
   ObjectMapper lightMapper = new ObjectMapper();
-  double steeringSpeed = 0.8;
+  double steeringSpeed = 0.6;
+  double driveSpeed = 0.9;
+  final double setPoint = 0;
 
 
   // read values periodically, use this code in autonomous and teleop
@@ -163,6 +163,7 @@ public class Robot extends TimedRobot {
     cancoder.configAllSettings(config);
     gyro = new AHRS(SerialPort.Port.kMXP, SerialDataType.kProcessedData, (byte)50); 
     gyro.calibrate();
+    
 
     //test code
   }
@@ -196,6 +197,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    gyro.calibrate();
   }
 
   @Override
@@ -208,18 +210,20 @@ public class Robot extends TimedRobot {
     //     driveTrainDirection = true;
     //   }System.out.println(json.getString("No JSON"));
     // reset 
+
+    System.out.println(gyro.getAngle() + "gyroscope");
     
     if (driverStick.getRawButtonPressed(5)) {
       encoder.reset();
     }
     
     SmartDashboard.putNumber("DriveTrain Rotation", gyro.getAngle());
-    System.out.println("\n" + json.getString("No JSON Data"));
+    //System.out.println("\n" + json.getString("No JSON Data"));
      try { JsonNode rootNode = lightMapper.readTree(json.getString(""));
           JsonNode idNode = rootNode.at("/Results/Fiducial/0/fID");//.path("Fiducial[0]").path("fID");
           tagID = idNode.asInt();
           System.out.println(tagID);
-          System.out.println(tx.getDouble(0));
+      //    System.out.println(tx.getDouble(0));
      } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
    
@@ -233,15 +237,24 @@ public class Robot extends TimedRobot {
         SmartDashboard.putBoolean("DriveTrain Direction", driveTrainDirection);
       }
     }
+    
+    
+    // SmartDashboard.putNumber("Compass Heading", (double)gyro.getRawGyroZ());
+    //  SmartDashboard.putNumber("set point", setPoint);
+    //  SmartDashboard.putNumber("PID value", pid.calculate((double)gyro.getRawGyroZ(), setPoint));
+    SmartDashboard.putNumber("gyro Z value", gyro.getRawGyroZ());
+    SmartDashboard.putNumber("gyro X value", gyro.getRawGyroX());
+    SmartDashboard.putNumber("gyro Y value", gyro.getRawGyroY());
+    SmartDashboard.putNumber("gyro YAW value", gyro.getYaw());
 
-
+    double driveAmount = driverStick.getZ() + (driverStick.getX() * 0.5) * steeringSpeed;
 
     if (driveTrainDirection == true){
-      motors1.arcadeDrive(driverStick.getY() * steeringSpeed, -driverStick.getZ() * steeringSpeed);
-      motors2.arcadeDrive(driverStick.getY() * steeringSpeed, -driverStick.getZ() * steeringSpeed);
+      motors1.arcadeDrive(driverStick.getY() * driveSpeed, -driveAmount);
+      motors2.arcadeDrive(driverStick.getY() * driveSpeed, -driveAmount);
     } else {
-      motors1.arcadeDrive(-driverStick.getY() * steeringSpeed, driverStick.getZ() * steeringSpeed);
-      motors2.arcadeDrive(-driverStick.getY() * steeringSpeed, driverStick.getZ() * steeringSpeed);
+      motors1.arcadeDrive(-driverStick.getY() * driveSpeed, driveAmount);
+      motors2.arcadeDrive(-driverStick.getY() * driveSpeed, driveAmount);
     }
 
     // pneumatics example
@@ -296,10 +309,15 @@ public class Robot extends TimedRobot {
     // timer.start();
     // if(timer.get()>6.75) {
     // }
+    gyro.calibrate();
     motors1.setDeadband(0.0001);
     motors2.setDeadband(0.0001);
+    pid.setTolerance(1);
+    pid.setSetpoint(90.0);
+    pid.enableContinuousInput(-180, 180);
     // rhythm(1, 100, 100, 10);
   }
+  
   public void hornPlayNote_async(int hornNo, long time_ms){
     Thread playThread = new Thread(() -> {
       horns[hornNo - 1].set(true);
@@ -325,31 +343,31 @@ public class Robot extends TimedRobot {
     rhythmThread.start();
   }
 // Song is a 2d array of longs, first [] defines the current note to play second [] is the info of the note. song[i][0] is the horn to play note through (If this is zero, the Program sleeps without playing anything) and song[i][1] is the time to play it for.
-  public void playSong(long[][] song) {
-    for(int i = 0; i <= song.length; i++){
-      if(song[i][0] == 0) {
-        try {Thread.sleep(song[i][1]); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
-        continue;
+  // public void playSong(long[][] song) {
+  //   for(int i = 0; i <= song.length; i++){
+  //     if(song[i][0] == 0) {
+  //       try {Thread.sleep(song[i][1]); } catch (Exception e) {System.out.println("I lay awake, thinking about all the things I had done wrong during the day.");}
+  //       continue;
 
-      } else if (song[i][0] > 6 || song[i][0] < 0){
-        System.out.println("Invalid Horn Number at note" + i);
-        continue;
+  //     } else if (song[i][0] > 6 || song[i][0] < 0){
+  //       System.out.println("Invalid Horn Number at note" + i);
+  //       continue;
 
-      }
-      hornPlayNote((int)song[i][0], song[i][1]);
-
-
-    }
+  //     }
+  //     hornPlayNote((int)song[i][0], song[i][1]);
 
 
+  //   }
 
 
-  }
+
+
+  // }
 
 
   @Override
   public void autonomousPeriodic() {
-    timer.start();
+    // timer.start();
     // // if(encoder.getDistance() < 5) {
     // //   motors1.arcadeDrive(.5, 0);
     // //   motors2.arcadeDrive(.5, 0);
@@ -436,8 +454,64 @@ public class Robot extends TimedRobot {
           System.out.println(tagID);
      } catch (Exception e) {System.out.println("Wierd JSON Bullshit");} 
     
+
+     SmartDashboard.putNumber("gyroscope", gyro.getYaw());
+     SmartDashboard.putNumber("set point", setPoint);
+    //  SmartDashboard.putNumber("PID value", pid.calculate(gyro.getAngle(), setPoint));
+    //  // P controller output: kP * error (90-gyro.getAngle()); reverse (make negative output)
+     // setpoint = -90 + gyro.getAngle()
+     /* setpoint of the PID is 90 degrees
+      * input of PID is gyro angle
+      output of the PID is 1 side of the drivatrain, other side run at the exact opposite of the normal output
+      */
+
+     // kP = 1/90
+    //  if (!pid.atSetpoint()){
+          // Find the heading error; setpoint is 90
+          double angle = gyro.getYaw();
+      // if (gyro.getYaw() < 180) {
+      //   angle = 180-gyro.getYaw();
+      //   System.out.println(angle);
+      // }
+
+
+      //motors1.arcadeDrive(0, pid.calculate(gyro.getYaw(), 90));
+      //motors2.arcadeDrive(0, pid.calculate(gyro.getYaw(), 90));
+      while (!pid.atSetpoint()) {
+        motors1.arcadeDrive(0, pid.calculate(angle, 90));
+        motors2.arcadeDrive(0, pid.calculate(angle, 90));
+        System.out.println("no");
+        if (pid.atSetpoint()) {
+          leftMotor.set(ControlMode.PercentOutput, 0);
+          leftMotor2.set(ControlMode.PercentOutput, 0);
+          rightMotor.set(ControlMode.PercentOutput, 0);
+          rightMotor2.set(ControlMode.PercentOutput, 0);
+          System.out.println("slay");
+        }
+      }
+      // if (pid.atSetpoint()) {
+      //   atSetpoint = true;
+      //   leftMotor.set(ControlMode.PercentOutput, 0);
+      //     leftMotor2.set(ControlMode.PercentOutput, 0);
+      //     rightMotor.set(ControlMode.PercentOutput, 0);
+      //     rightMotor2.set(ControlMode.PercentOutput, 0);
+      //  } else if (atSetpoint = false) {
+      //   motors1.arcadeDrive(0, pid.calculate(angle, 90));
+      //   motors2.arcadeDrive(0, pid.calculate(angle, 90));
+      //   System.out.println("no");
+      //  }
+
+    // Turns the robot to face the desired direction
+    // if (pidValue == 0) {
+    //   motors1.tankDrive(kP * error, -kP * error);
+    //   motors2.tankDrive(kP * error, -kP * error);
+    // } else {
+    //   motors1.arcadeDrive(0, 0);
+    //   motors2.arcadeDrive(0, 0);
+    // }
+    //  }
     
-    if (tv.getDouble(0) == 1) {
+    /*if (tv.getDouble(0) == 1) {
     //   double xAngleOffset = tx.getDouble(0);
     //   motors1.arcadeDrive(0, pid.calculate(gyro.getAngle(), setPoint));
       //double RobotVerticalAngle = ty.getDouble(0);
@@ -457,13 +531,13 @@ public class Robot extends TimedRobot {
       //   rightMotor.set(ControlMode.PercentOutput, 0);
       //   rightMotor2.set(ControlMode.PercentOutput, 0);
       // }
-      a_turnValue = -tx.getDouble(0)/54;
-      if (ty.getDouble(0) > 19.25) {
-        a_driveValue = (ty.getDouble(0)-19.25)/5.35;
+      // a_turnValue = -tx.getDouble(0)/54;
+      // if (ty.getDouble(0) > 19.25) {
+        // a_driveValue = (ty.getDouble(0)-19.25)/5.35;
       } else if(ty.getDouble(0) < 18.75) {
-        a_driveValue = -(9.25+(-(ty.getDouble(0)-9.25)))/18.5;
+        // a_driveValue = -(9.25+(-(ty.getDouble(0)-9.25)))/18.5;
       } else {
-        a_driveValue = 0;
+        // a_driveValue = 0;
         // arm code goes here
       } 
       if (a_driveValue > 1) {
@@ -494,6 +568,6 @@ public class Robot extends TimedRobot {
       if (timer.get() >= 1.5) {
         timer.reset();
       }
-    }
+    } */
   }
 }
